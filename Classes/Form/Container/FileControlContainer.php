@@ -39,16 +39,16 @@ final class FileControlContainer extends FilesControlContainerCore
     /**
      * Generate buttons to select, reference and upload files.
      */
-    protected function getFileSelectors(array $inlineConfiguration, FileExtensionFilter $fileExtensionFilter): array
+    protected function getFileSelectors(array $inlineStructure, array $inlineConfiguration, FileExtensionFilter $fileExtensionFilter): array
     {
-        $rval = parent::getFileSelectors($inlineConfiguration, $fileExtensionFilter);
+        $rval = parent::getFileSelectors($inlineStructure, $inlineConfiguration, $fileExtensionFilter);
         /** @var  StorageRepository $service */
         $storageReporitory = GeneralUtility::makeInstance(StorageRepository::class);
         $storages = $storageReporitory->findAll();
 
         foreach ($storages as $storage) {
             if ($storage->getDriverType() === 'Canto' && $storage->getUid() > 0) {
-                $newbuttonData = $this->renderAssetPickerButton($inlineConfiguration, $storage->getUid(), $storage->getName());
+                $newbuttonData = $this->renderAssetPickerButton($inlineStructure, $inlineConfiguration, $storage->getUid(), $storage->getName());
                 $rval[count($rval)] = $newbuttonData;
             }
         }
@@ -57,18 +57,20 @@ final class FileControlContainer extends FilesControlContainerCore
     }
 
     /**
+     * @param array<string, mixed> $inlineStructure
      * @param array<string, mixed> $inlineConfiguration
      * @param int $storageId
      * @return string
      */
-    private function renderAssetPickerButton(array $inlineConfiguration, int $storageId, string $storageName): string
+    private function renderAssetPickerButton(array $inlineStructure, array $inlineConfiguration, int $storageId, string $storageName): string
     {
         $foreign_table = $inlineConfiguration['foreign_table'];
         $allowed = '';
         if (isset($inlineConfiguration['allowed'])) {
             $allowed = $inlineConfiguration['allowed'];
         }
-        $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix(
+        $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getDomObjectIdPrefixFromStructure(
+            $inlineStructure,
             $this->data['inlineFirstPid']
         );
         $objectPrefix = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;

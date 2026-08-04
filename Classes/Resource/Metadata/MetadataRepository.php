@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace TYPO3Canto\CantoFal\Resource\Metadata;
 
 use Doctrine\DBAL\ParameterType;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\RootLevelRestriction;
@@ -21,9 +23,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class MetadataRepository extends Typo3MetaDataRepository
 {
+    private const TABLE_NAME = 'sys_file_metadata';
+
+    public function __construct(
+        private readonly EventDispatcherInterface $eventDispatcher,
+        ConnectionPool $connectionPool,
+        Context $context,
+    ) {
+        parent::__construct($this->eventDispatcher, $connectionPool, $context);
+    }
+
     public function findByFileUidAndLanguageUid(int $uid, int $languageUid): array
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->tableName);
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable(self::TABLE_NAME);
         $queryBuilder
             ->getRestrictions()
             ->add(GeneralUtility::makeInstance(RootLevelRestriction::class))
@@ -31,7 +43,7 @@ class MetadataRepository extends Typo3MetaDataRepository
 
         $record = $queryBuilder
             ->select('*')
-            ->from($this->tableName)
+            ->from(self::TABLE_NAME)
             ->where(
                 $queryBuilder->expr()->eq(
                     'file',
@@ -54,14 +66,14 @@ class MetadataRepository extends Typo3MetaDataRepository
 
     public function findAllByFileUid(int $uid): array
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->tableName);
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable(self::TABLE_NAME);
         $queryBuilder
             ->getRestrictions()
             ->add(GeneralUtility::makeInstance(RootLevelRestriction::class));
 
         $statement = $queryBuilder
             ->select('*')
-            ->from($this->tableName)
+            ->from(self::TABLE_NAME)
             ->where(
                 $queryBuilder->expr()->eq(
                     'file',

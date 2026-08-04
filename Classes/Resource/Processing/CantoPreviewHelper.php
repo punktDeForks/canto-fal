@@ -12,18 +12,28 @@ declare(strict_types=1);
 namespace TYPO3Canto\CantoFal\Resource\Processing;
 
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\Processing\LocalPreviewHelper;
+use TYPO3\CMS\Core\Resource\Processing\LocalImageProcessor;
+use TYPO3\CMS\Core\Resource\Processing\TaskInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Imaging\GifBuilder;
 use TYPO3Canto\CantoFal\Resource\Repository\CantoRepository;
 
-class CantoPreviewHelper extends LocalPreviewHelper
+class CantoPreviewHelper extends LocalImageProcessor
 {
     protected CantoRepository $cantoRepository;
 
     public function setCantoRepository(CantoRepository $cantoRepository): void
     {
         $this->cantoRepository = $cantoRepository;
+    }
+
+    /**
+     * LocalImageProcessor (successor of the removed LocalPreviewHelper) no longer exposes
+     * the dimension-checking entry point publicly, so it is re-exposed here for CantoPreviewProcessor.
+     */
+    public function process(TaskInterface $task): ?array
+    {
+        return $this->processPreview($task);
     }
 
     protected function generatePreviewFromFile(File $file, array $configuration, string $targetFilePath): array
