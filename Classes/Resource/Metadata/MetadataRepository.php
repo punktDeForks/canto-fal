@@ -21,7 +21,7 @@ use TYPO3\CMS\Core\Resource\Event\EnrichFileMetaDataEvent;
 use TYPO3\CMS\Core\Resource\Index\MetaDataRepository as Typo3MetaDataRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class MetadataRepository extends Typo3MetaDataRepository
+readonly class MetadataRepository extends Typo3MetaDataRepository
 {
     private const TABLE_NAME = 'sys_file_metadata';
 

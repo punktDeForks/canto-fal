@@ -18,7 +18,6 @@ use TYPO3\CMS\Backend\Tree\View\LinkParameterProviderInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Fluid\View\FluidViewAdapter;
 use TYPO3Canto\CantoFal\Resource\CantoClientFactory;
 use TYPO3Canto\CantoFal\Resource\Driver\CantoDriver;
 use TYPO3Canto\CantoFal\Resource\NoCantoStorageException;
@@ -56,10 +55,6 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
 
     public function render(): string
     {
-        $templateView = $this->view;
-        // Make sure that the base initialization creates an FluidView within an FluidViewAdapter
-        $templateView = (fn($templateView): FluidViewAdapter => GeneralUtility::makeInstance(FluidViewAdapter::class, $templateView))($templateView);
-
         $contentOnly = (bool)($this->getRequest()->getQueryParams()['contentOnly'] ?? false);
         $this->pageRenderer->setTitle($this->getLanguageService()->sL('LLL:EXT:canto_fal/Resources/Private/Language/locallang_be.xlf:canto_asset_browser.title'));
 
@@ -69,7 +64,7 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
         $cantoClientFactory = GeneralUtility::makeInstance(CantoClientFactory::class);
         $client = $cantoClientFactory->createClientFromDriverConfiguration($this->storage->getConfiguration());
 
-        $templateView->assignMultiple([
+        $this->view->assignMultiple([
             'storage' => $this->storage,
             'assetPickerDomain' => $domain,
             'token' => $client->getAccessToken(),
@@ -122,20 +117,6 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
     {
         $storageId = (int)(explode('|', $this->bparams)[5] ?? 0);
         $this->storage = $this->findStorageById($storageId);
-    }
-
-    protected function initializeView(): void
-    {
-        $view = $this->moduleTemplate->getView();
-        $view->setLayoutRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Layouts/',
-        ]);
-        $view->setPartialRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Partials/',
-        ]);
-        $view->setTemplateRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Templates/CantoAssetBrowser/',
-        ]);
     }
 
     /**

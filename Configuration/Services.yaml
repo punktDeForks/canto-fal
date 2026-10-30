@@ -145,6 +145,7 @@ services:
       - "@TYPO3Canto\\CantoFal\\Resource\\Repository\\CantoRepository"
       - "@TYPO3\\CMS\\Core\\Resource\\ProcessedFileRepository"
       - "@TYPO3Canto\\CantoFal\\Resource\\MdcUrlGenerator"
+      - "@TYPO3\\CMS\\Core\\Resource\\Processing\\TaskTypeRegistry"
     tags:
       - name: event.listener
         identifier: cantoMdcProcessingFileEnricher

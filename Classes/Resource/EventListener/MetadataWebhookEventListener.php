@@ -41,7 +41,7 @@ final class MetadataWebhookEventListener
         $identifier = CantoUtility::buildCombinedIdentifier($event->getScheme(), $event->getId());
         $file = null;
         foreach ($cantoStorages as $storage) {
-            $file = $this->resourceFactory->getFileObjectByStorageAndIdentifier($storage->getUid(), $identifier);
+            $file = $storage->getFileByIdentifier($identifier);
             if ($file instanceof File) {
                 break;
             }

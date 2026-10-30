@@ -20,7 +20,7 @@ use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\Index\FileIndexRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class CantoFileIndexRepository extends FileIndexRepository
+readonly class CantoFileIndexRepository extends FileIndexRepository
 {
     private const TABLE = 'sys_file';
 
@@ -37,7 +37,7 @@ class CantoFileIndexRepository extends FileIndexRepository
         );
     }
 
-    public function findByFolder(Folder $folder): ?array
+    public function findByFolder(Folder $folder): array
     {
         /** @var QueryBuilder $queryBuilder */
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)

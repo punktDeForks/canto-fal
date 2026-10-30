@@ -55,6 +55,7 @@ final class Exporter
             return false;
         }
         $driveType = $file->getStorage()->getDriverType();
+        $configuration = $file->getStorage()->getConfiguration();
         if (empty($configuration['metadataExportMapping'] ?? [])
             || $driveType != 'Canto') {
             return false;
@@ -62,7 +63,6 @@ final class Exporter
 
         assert($file instanceof File);
         ['scheme' => $scheme, 'identifier' => $identifier] = CantoUtility::splitCombinedIdentifier($file->getIdentifier());
-        $configuration = $file->getStorage()->getConfiguration();
 
         $mapping = json_decode($configuration['metadataExportMapping'], true);
         $language = (int)$metadata['sys_language_uid'];

@@ -14,7 +14,6 @@ namespace TYPO3Canto\CantoFal\Resource;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Http\Client\GuzzleClientFactory;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Canto\CantoApi\Client;
@@ -26,12 +25,7 @@ class CantoClientFactory implements LoggerAwareInterface, SingletonInterface
 
     public function createClientFromDriverConfiguration(array $configuration): Client
     {
-        $typo3Version = GeneralUtility::makeInstance(Typo3Version::class);
-        if ($typo3Version->getMajorVersion() > 11) {
-            $gizzleClient = GeneralUtility::makeInstance(GuzzleClientFactory::class)->getClient();
-        } else {
-            $gizzleClient = GuzzleClientFactory::getClient();
-        }
+        $gizzleClient = GeneralUtility::makeInstance(GuzzleClientFactory::class)->getClient();
 
         $clientOptions = new ClientOptions([
             'cantoName' => $configuration['cantoName'],
