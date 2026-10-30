@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace TYPO3Canto\CantoFal\Resource\Metadata;
 
+use Doctrine\DBAL\ParameterType;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
 use TYPO3\CMS\Core\Resource\File;
@@ -38,14 +39,15 @@ final class Exporter
 
     public function exportToCanto(int $uid, array $metadata)
     {
-        $result = $this->connection->getQueryBuilderForTable('sys_file_metadata')
-            ->select('file')
+        $queryBuilder = $this->connection->getQueryBuilderForTable('sys_file_metadata');
+        $record = $queryBuilder
+            ->select('file', 'sys_language_uid')
             ->from('sys_file_metadata')
-            ->where('uid = ' . $uid)
-            ->executeQuery();
+            ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($uid, ParameterType::INTEGER)))
+            ->executeQuery()
+            ->fetchAssociative();
 
-        $fileUid = $result->fetchAssociative()['file'] ?? null;
-
+        $fileUid = $record['file'] ?? null;
         if ($fileUid === null) {
             return false;
         }
@@ -65,10 +67,13 @@ final class Exporter
         ['scheme' => $scheme, 'identifier' => $identifier] = CantoUtility::splitCombinedIdentifier($file->getIdentifier());
 
         $mapping = json_decode($configuration['metadataExportMapping'], true);
-        $language = (int)$metadata['sys_language_uid'];
+        $language = (int)$record['sys_language_uid'];
         $this->transformMetadataAndMappingArray($metadata, $mapping, $language);
         $this->cantoRepository->initialize($file->getStorage()->getUid(), $configuration);
         $properties = $this->transformMetadataIntoPropertiesArray($metadata, $mapping, $language);
+        if ($properties === []) {
+            return false;
+        }
         $event = $this->dispatcher->dispatch(new BeforeMetadataUploadEvent($scheme, $identifier, $properties));
         assert($event instanceof BeforeMetadataUploadEvent);
         $cantoRequest = new BatchUpdatePropertiesRequest();
@@ -125,10 +130,11 @@ final class Exporter
             if (is_string($cantoField)) {
                 $cantoField = ['name' => $cantoField];
             }
-            if (is_array($cantoField) && isset($cantoField['name'])) {
+            // Only changed fields are passed in, unchanged ones must not be reset in Canto
+            if (is_array($cantoField) && isset($cantoField['name']) && array_key_exists($metadataKey, $data)) {
                 $properties[] = [
                     'propertyId' => $cantoField['name'],
-                    'propertyValue' => $data[$metadataKey] ?? '',
+                    'propertyValue' => $data[$metadataKey],
                     'action' => $cantoField['action'] ?? '',
                     'customField' => $cantoField['customField'] ?? false,
                 ];

@@ -198,27 +198,6 @@ class BrowseCantoAssets {
       });
   }
 
-  /**
-   * @async
-   * @param scheme
-   * @param identifier
-   * @param storageUid
-   * @returns {Promise<{fileName: string, fileUid: number}>}
-   */
-  static addCdnFile(scheme, identifier, storageUid) {
-    const params = {
-      'scheme': scheme,
-      'identifier': identifier,
-      'storageUid': storageUid
-    };
-    return (new AjaxRequest(TYPO3.settings.ajaxUrls.add_canto_cdn_file))
-      .withQueryArguments(params)
-      .get()
-      .then(async (response) => {
-        return await response.resolve();
-      });
-  }
-
   static insertElement(fileName, fileUid, close) {
     return ElementBrowser.insertElement('sys_file', String(fileUid), fileName, String(fileUid), close);
   }

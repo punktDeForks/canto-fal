@@ -19,6 +19,7 @@ services:
       - '@TYPO3\CMS\Core\Registry'
       - '@cache.canto_folder'
       - '@cache.canto_file'
+      - '@TYPO3Canto\CantoFal\Resource\Metadata\Exporter'
 
   TYPO3\CMS\Backend\Form\Container\FilesControlContainer:
     public: true
@@ -150,12 +151,6 @@ services:
       - name: event.listener
         identifier: cantoMdcProcessingFileEnricher
         event: TYPO3\CMS\Core\Resource\Event\BeforeFileProcessingEvent
-
-  TYPO3Canto\CantoFal\Resource\EventListener\AfterFormEnginePageInitializedEventListener:
-    tags:
-      - name: event.listener
-        identifier: afterFormEnginePageInitializedEventListener
-        event: TYPO3\CMS\Backend\Controller\Event\AfterFormEnginePageInitializedEvent
 
   TYPO3Canto\CantoFal\Resource\EventListener\ReloadMetadataInFormEngineEventListener:
     tags:

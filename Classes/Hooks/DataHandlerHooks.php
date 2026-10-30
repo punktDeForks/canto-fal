@@ -14,7 +14,10 @@ namespace TYPO3Canto\CantoFal\Hooks;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Registry;
+use TYPO3\CMS\Core\SysLog\Action\Database as DatabaseAction;
+use TYPO3\CMS\Core\SysLog\Error as SystemLogError;
 use TYPO3Canto\CantoFal\Resource\Driver\CantoDriver;
+use TYPO3Canto\CantoFal\Resource\Metadata\Exporter;
 use TYPO3Canto\CantoFal\Resource\Repository\CantoRepository;
 
 class DataHandlerHooks
@@ -25,14 +28,34 @@ class DataHandlerHooks
 
     protected FrontendInterface $cantoFileCache;
 
+    protected Exporter $exporter;
+
     public function __construct(
         Registry $registry,
         FrontendInterface $cantoFolderCache,
-        FrontendInterface $cantoFileCache
+        FrontendInterface $cantoFileCache,
+        Exporter $exporter
     ) {
         $this->registry = $registry;
         $this->cantoFolderCache = $cantoFolderCache;
         $this->cantoFileCache = $cantoFileCache;
+        $this->exporter = $exporter;
+    }
+
+    /**
+     * Exports only the fields DataHandler has actually written, so access checks and excluded fields are respected.
+     */
+    public function processDatamap_afterDatabaseOperations(string $status, string $table, int|string $id, array $fieldArray, DataHandler $dataHandler): void
+    {
+        if ($status !== 'update' || $table !== 'sys_file_metadata' || $fieldArray === []) {
+            return;
+        }
+        try {
+            $this->exporter->exportToCanto((int)$id, $fieldArray);
+        } catch (\Throwable $exception) {
+            // A failing Canto request must not abort the remaining DataHandler operations
+            $dataHandler->log($table, (int)$id, DatabaseAction::UPDATE, null, SystemLogError::WARNING, 'Exporting metadata to Canto failed: %s', null, [$exception->getMessage()]);
+        }
     }
 
     public function processDatamap_afterAllOperations(DataHandler $dataHandler): void
