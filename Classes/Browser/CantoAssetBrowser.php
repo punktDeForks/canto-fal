@@ -36,7 +36,7 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
     {
         parent::initialize($request);
 
-        $this->initializeStorage();
+        $this->initializeStorage($request);
         $this->pageRenderer->loadJavaScriptModule('@typo3-canto/canto-fal/BrowseCantoAssetsV12.js');
 
         $this->pageRenderer->addCssFile(
@@ -49,7 +49,7 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
         return [
             'data-mode' => 'canto',
             'data-storage-uid' => (string)$this->storage->getUid(),
-            'data-allowed-file-extensions' => explode('|', $this->bparams)[3] ?? '',
+            'data-allowed-file-extensions' => $this->browserParameters->allowedTypes,
         ];
     }
 
@@ -113,9 +113,13 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
     /**
      * @throws NoCantoStorageException
      */
-    protected function initializeStorage(): void
+    protected function initializeStorage(ServerRequestInterface $request): void
     {
-        $storageId = (int)(explode('|', $this->bparams)[5] ?? 0);
+        // The storage is passed as entry point "<storageUid>:/" (TYPO3 14 drops additional bparams segments)
+        $entryPoint = (string)($request->getQueryParams()['expandFolder'] ?? '');
+        $storageId = str_contains($entryPoint, ':')
+            ? (int)strstr($entryPoint, ':', true)
+            : (int)(explode('|', (string)($request->getQueryParams()['bparams'] ?? ''))[5] ?? 0);
         $this->storage = $this->findStorageById($storageId);
     }
 

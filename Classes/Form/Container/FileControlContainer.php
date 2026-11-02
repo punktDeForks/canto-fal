@@ -48,7 +48,7 @@ final class FileControlContainer extends FilesControlContainerCore
 
         foreach ($storages as $storage) {
             if ($storage->getDriverType() === 'Canto' && $storage->getUid() > 0) {
-                $newbuttonData = $this->renderAssetPickerButton($inlineStructure, $inlineConfiguration, $storage->getUid(), $storage->getName());
+                $newbuttonData = $this->renderAssetPickerButton($inlineStructure, $inlineConfiguration, $fileExtensionFilter, $storage->getUid(), $storage->getName());
                 $rval[count($rval)] = $newbuttonData;
             }
         }
@@ -59,33 +59,28 @@ final class FileControlContainer extends FilesControlContainerCore
     /**
      * @param array<string, mixed> $inlineStructure
      * @param array<string, mixed> $inlineConfiguration
-     * @param int $storageId
-     * @return string
      */
-    private function renderAssetPickerButton(array $inlineStructure, array $inlineConfiguration, int $storageId, string $storageName): string
+    private function renderAssetPickerButton(array $inlineStructure, array $inlineConfiguration, FileExtensionFilter $fileExtensionFilter, int $storageId, string $storageName): string
     {
         $foreign_table = $inlineConfiguration['foreign_table'];
-        $allowed = '';
-        if (isset($inlineConfiguration['allowed'])) {
-            $allowed = $inlineConfiguration['allowed'];
-        }
         $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getDomObjectIdPrefixFromStructure(
             $inlineStructure,
             $this->data['inlineFirstPid']
         );
         $objectPrefix = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;
 
-        $hideButton = isset($inlineConfiguration['maxitems']) && count($this->data['parameterArray']['fieldConf']['children']) >= $inlineConfiguration['maxitems'];
-
         $title = 'Add file [' . $storageName . ']';
 
+        // Core JS toggles the "hidden" attribute when references are added/removed, an inline style would stick
         $attributes = [
             'type' => 'button',
             'class' => 'btn btn-default t3js-element-browser',
+            'hidden' => !($inlineConfiguration['inline']['showCreateNewRelationButton'] ?? true) ? 'hidden' : null,
             'data-mode' => 'cantosaas',
-            'data-params' => '|||' . $allowed . '|' . $objectPrefix . '|' . $storageId,
-            'style' => $hideButton ? 'display: none;' : ''
-                . ($inlineConfiguration['inline']['inlineNewRelationButtonStyle'] ?? ''),
+            'data-allowed-types' => implode(',', $fileExtensionFilter->getAllowedFileExtensions() ?? []),
+            'data-disallowed-types' => implode(',', $fileExtensionFilter->getDisallowedFileExtensions() ?? []),
+            'data-irre-object-id' => $objectPrefix,
+            'data-entry-point' => $storageId . ':/',
             'title' => $title,
         ];
 
