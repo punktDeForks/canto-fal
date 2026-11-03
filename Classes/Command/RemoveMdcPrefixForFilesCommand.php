@@ -49,8 +49,7 @@ final class RemoveMdcPrefixForFilesCommand extends Command
             }
             $indexer = GeneralUtility::makeInstance(Indexer::class, $file->getStorage());
             if (str_starts_with($file->getIdentifier(), 'mdc::')) {
-                $file->setIdentifier(str_replace('mdc::', '', $file->getIdentifier()));
-                $file->updateProperties(['identifier' => $file->getIdentifier()]);
+                $file->updateProperties(['identifier' => str_replace('mdc::', '', $file->getIdentifier())]);
                 $indexer->updateIndexEntry($file);
             }
         }

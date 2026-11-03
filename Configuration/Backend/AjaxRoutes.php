@@ -13,11 +13,6 @@ return [
         'access' => 'public',
         'target' => \TYPO3Canto\CantoFal\Controller\Backend\CantoAssetBrowserController::class . '::importFile',
     ],
-    'add_canto_cdn_file' => [
-        'path' => '/canto-fal/import-canto-cdn-file',
-        'access' => 'public',
-        'target' => \TYPO3Canto\CantoFal\Controller\Backend\CantoAssetBrowserController::class . '::importCdn',
-    ],
     'search_canto_file' => [
         'path' => '/canto-fal/search-canto-file',
         'access' => 'public',

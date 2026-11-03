@@ -18,7 +18,6 @@ use TYPO3\CMS\Backend\Tree\View\LinkParameterProviderInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Fluid\View\FluidViewAdapter;
 use TYPO3Canto\CantoFal\Resource\CantoClientFactory;
 use TYPO3Canto\CantoFal\Resource\Driver\CantoDriver;
 use TYPO3Canto\CantoFal\Resource\NoCantoStorageException;
@@ -37,7 +36,7 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
     {
         parent::initialize($request);
 
-        $this->initializeStorage();
+        $this->initializeStorage($request);
         $this->pageRenderer->loadJavaScriptModule('@typo3-canto/canto-fal/BrowseCantoAssetsV12.js');
 
         $this->pageRenderer->addCssFile(
@@ -50,16 +49,12 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
         return [
             'data-mode' => 'canto',
             'data-storage-uid' => (string)$this->storage->getUid(),
-            'data-allowed-file-extensions' => explode('|', $this->bparams)[3] ?? '',
+            'data-allowed-file-extensions' => $this->browserParameters->allowedTypes,
         ];
     }
 
     public function render(): string
     {
-        $templateView = $this->view;
-        // Make sure that the base initialization creates an FluidView within an FluidViewAdapter
-        $templateView = (fn($templateView): FluidViewAdapter => GeneralUtility::makeInstance(FluidViewAdapter::class, $templateView))($templateView);
-
         $contentOnly = (bool)($this->getRequest()->getQueryParams()['contentOnly'] ?? false);
         $this->pageRenderer->setTitle($this->getLanguageService()->sL('LLL:EXT:canto_fal/Resources/Private/Language/locallang_be.xlf:canto_asset_browser.title'));
 
@@ -69,7 +64,7 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
         $cantoClientFactory = GeneralUtility::makeInstance(CantoClientFactory::class);
         $client = $cantoClientFactory->createClientFromDriverConfiguration($this->storage->getConfiguration());
 
-        $templateView->assignMultiple([
+        $this->view->assignMultiple([
             'storage' => $this->storage,
             'assetPickerDomain' => $domain,
             'token' => $client->getAccessToken(),
@@ -118,24 +113,14 @@ final class CantoAssetBrowser extends AbstractElementBrowser implements ElementB
     /**
      * @throws NoCantoStorageException
      */
-    protected function initializeStorage(): void
+    protected function initializeStorage(ServerRequestInterface $request): void
     {
-        $storageId = (int)(explode('|', $this->bparams)[5] ?? 0);
+        // The storage is passed as entry point "<storageUid>:/" (TYPO3 14 drops additional bparams segments)
+        $entryPoint = (string)($request->getQueryParams()['expandFolder'] ?? '');
+        $storageId = str_contains($entryPoint, ':')
+            ? (int)strstr($entryPoint, ':', true)
+            : (int)(explode('|', (string)($request->getQueryParams()['bparams'] ?? ''))[5] ?? 0);
         $this->storage = $this->findStorageById($storageId);
-    }
-
-    protected function initializeView(): void
-    {
-        $view = $this->moduleTemplate->getView();
-        $view->setLayoutRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Layouts/',
-        ]);
-        $view->setPartialRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Partials/',
-        ]);
-        $view->setTemplateRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Templates/CantoAssetBrowser/',
-        ]);
     }
 
     /**

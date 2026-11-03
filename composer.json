@@ -29,10 +29,10 @@
   "require": {
     "php": "^8.2",
     "ext-json": "*",
-    "guzzlehttp/guzzle": "^7.9.2",
-    "typo3/cms-core": "^13.4",
-    "typo3/cms-filelist": "^13.4",
-    "typo3/cms-filemetadata": "^13.4",
+    "guzzlehttp/guzzle": "^7.9.2 || ^8.0",
+    "typo3/cms-core": "^14.3",
+    "typo3/cms-filelist": "^14.3",
+    "typo3/cms-filemetadata": "^14.3",
     "psr/log": "^3.0.1",
     "typo3-canto/canto-api": "^1.1"
   },
