@@ -119,9 +119,9 @@ class BrowseCantoAssets {
     const type = filterForm.querySelector(Selectors.searchFormType + ':checked').value;
     [].forEach.call(filterForm.querySelectorAll('[data-canto-show-by-types]'), (container) => {
       if (container.dataset.cantoShowByTypes.split(',').indexOf(type) !== -1) {
-        container.classList.remove('hidden');
+        container.classList.remove('d-none');
       } else {
-        container.classList.add('hidden');
+        container.classList.add('d-none');
       }
     });
   }
