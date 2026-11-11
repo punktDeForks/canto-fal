@@ -57,7 +57,7 @@ final class NewAssetVersionWebhookEventListener
     private function getFile(array $storages, string $identifier): ?File
     {
         foreach ($storages as $storage) {
-            $file = $this->resourceFactory->getFileObjectByStorageAndIdentifier($storage->getUid(), $identifier);
+            $file = $storage->getFileByIdentifier($identifier);
             if ($file instanceof File) {
                 return $file;
             }

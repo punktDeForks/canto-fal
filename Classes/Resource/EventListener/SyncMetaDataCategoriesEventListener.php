@@ -57,12 +57,12 @@ final class SyncMetaDataCategoriesEventListener
             return;
         }
 
-        $categories = $this->extractor->getMappedCategories($file);
+        $categoryUids = $this->extractor->getMappedCategories($file);
 
         $metadata = $this->metadataRepository->findAllByFileUid($fileUid);
         if (!empty($metadata)) {
-            foreach ($categories as $category) {
-                $categoryCollection = CategoryCollection::load($category->getUid(), true, self::TABLE_NAME, 'categories');
+            foreach ($categoryUids as $categoryUid) {
+                $categoryCollection = CategoryCollection::load($categoryUid, true, self::TABLE_NAME, 'categories');
                 assert($categoryCollection instanceof CategoryCollection);
                 foreach ($metadata as $record) {
                     $categoryCollection->add(['uid' => $record['uid']]);

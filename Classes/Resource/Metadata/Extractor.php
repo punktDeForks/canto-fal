@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace TYPO3Canto\CantoFal\Resource\Metadata;
 
+use Doctrine\DBAL\ParameterType;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\Index\ExtractorInterface;
@@ -90,7 +93,7 @@ class Extractor implements ExtractorInterface
         try {
             $mapping = json_decode($configuration['categoryMapping'], true, 512, JSON_THROW_ON_ERROR);
             // we currently do not support translating sys_categories
-            $categoryData = $this->applyMappedMetaData($mapping, [], $fileData)[0] ?? [];
+            $categoryData = $this->applyMappedMetaData($mapping, $fileData)[0] ?? [];
             $categories = $this->buildCategoryTree($categoryData);
         } catch (\JsonException $exception) {
             // todo: add mapping logging
@@ -215,13 +218,13 @@ class Extractor implements ExtractorInterface
         return array_map(static fn($uid) => (int)$uid, $uidList);
     }
 
-    private function extractFromMetadata(array $metadata, array $fileKey)
+    private function extractFromMetadata(mixed $metadata, array $fileKey): mixed
     {
-        if (!$metadata || !$fileKey) {
+        if (!is_array($metadata) || $metadata === [] || $fileKey === []) {
             return null;
         }
         $key = array_shift($fileKey);
-        if (count($fileKey) === 0) {
+        if ($fileKey === []) {
             if ($metadata[$key] ?? null) {
                 return $metadata[$key];
             }
@@ -231,51 +234,61 @@ class Extractor implements ExtractorInterface
                     return $value;
                 }
             }
+            return null;
         }
-        return $this->extractFromMetadata($metadata[$key] ?? [], $fileKey);
+        return $this->extractFromMetadata($metadata[$key] ?? null, $fileKey);
     }
 
     /**
-     * @param array $mappedCategoryConfiguration
-     * @param Category|null $parent
-     * @param CategoryRepository|null $categoryRepository
-     * @return Category[]
+     * @return int[] sys_category uids
      */
-    private function buildCategoryTree(array $mappedCategoryConfiguration, ?Category $parent = null, ?CategoryRepository $categoryRepository = null): array
+    private function buildCategoryTree(array $mappedCategoryConfiguration, int $parentUid = 0): array
     {
-        $categoryRepository ??= GeneralUtility::makeInstance(CategoryRepository::class);
-        assert($categoryRepository instanceof CategoryRepository);
-        $categories = [];
+        $categoryUids = [];
         foreach ($mappedCategoryConfiguration as $title => $children) {
-            $category = $parent;
+            $categoryUid = $parentUid;
             if (is_string($title)) {
-                $category = $this->addCategory($title, $parent, $categoryRepository);
-                $categories[] = $category;
+                $categoryUid = $this->addCategory($title, $parentUid);
+                $categoryUids[] = $categoryUid;
             }
-            if (is_array($children) && $category !== null) {
-                $categories = [...$categories, ...$this->buildCategoryTree($children, $category, $categoryRepository)];
+            if (is_array($children) && $categoryUid !== 0) {
+                $categoryUids = [...$categoryUids, ...$this->buildCategoryTree($children, $categoryUid)];
             }
             if (is_string($children)) {
-                $categories[] = $this->addCategory($children, $category, $categoryRepository);
+                $categoryUids[] = $this->addCategory($children, $categoryUid);
             }
         }
-        return $categories;
+        return $categoryUids;
     }
 
-    private function addCategory(string $title, ?Category $parent, CategoryRepository $repository): Category
+    private function addCategory(string $title, int $parentUid): int
     {
-        assert(is_callable([$repository, 'findByTitle']));
-        $category = $repository->findByTitle($title)->toArray()[0] ?? null;
-        if ($category === null) {
-            $category = new Category();
-            $category->setDescription('Canto generated category');
-            $category->setTitle($title);
-            if ($parent) {
-                $category->setParent($parent);
-            }
-            $repository->add($category);
+        $queryBuilder = $this->getQueryBuilder('sys_category');
+        $uid = $queryBuilder
+            ->select('uid')
+            ->from('sys_category')
+            ->where($queryBuilder->expr()->eq('title', $queryBuilder->createNamedParameter($title)))
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchOne();
+        if ($uid !== false) {
+            return (int)$uid;
         }
-        return $category;
+
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('sys_category');
+        $connection->insert(
+            'sys_category',
+            [
+                'pid' => 0,
+                'title' => $title,
+                'description' => 'Canto generated category',
+                'parent' => $parentUid,
+                'tstamp' => $GLOBALS['EXEC_TIME'] ?? time(),
+                'crdate' => $GLOBALS['EXEC_TIME'] ?? time(),
+            ],
+            ['parent' => ParameterType::INTEGER]
+        );
+        return (int)$connection->lastInsertId();
     }
 
     private function getQueryBuilder(string $forTable): QueryBuilder

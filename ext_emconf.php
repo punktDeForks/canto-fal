@@ -14,8 +14,8 @@ $EM_CONF['canto_fal'] = [
     'version' => '2.1.0',
     'constraints' => [
         'depends' => [
-            'typo3' => '13.4.0-13.4.99',
-            'filemetadata' => '13.4.0-13.4.99',
+            'typo3' => '14.0.0-14.99.99',
+            'filemetadata' => '14.0.0-14.99.99',
         ],
     ],
     'state' => 'stable',

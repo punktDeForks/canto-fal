@@ -119,9 +119,9 @@ class BrowseCantoAssets {
     const type = filterForm.querySelector(Selectors.searchFormType + ':checked').value;
     [].forEach.call(filterForm.querySelectorAll('[data-canto-show-by-types]'), (container) => {
       if (container.dataset.cantoShowByTypes.split(',').indexOf(type) !== -1) {
-        container.classList.remove('hidden');
+        container.classList.remove('d-none');
       } else {
-        container.classList.add('hidden');
+        container.classList.add('d-none');
       }
     });
   }
@@ -191,27 +191,6 @@ class BrowseCantoAssets {
       'storageUid': storageUid
     };
     return (new AjaxRequest(TYPO3.settings.ajaxUrls.import_canto_file))
-      .withQueryArguments(params)
-      .get()
-      .then(async (response) => {
-        return await response.resolve();
-      });
-  }
-
-  /**
-   * @async
-   * @param scheme
-   * @param identifier
-   * @param storageUid
-   * @returns {Promise<{fileName: string, fileUid: number}>}
-   */
-  static addCdnFile(scheme, identifier, storageUid) {
-    const params = {
-      'scheme': scheme,
-      'identifier': identifier,
-      'storageUid': storageUid
-    };
-    return (new AjaxRequest(TYPO3.settings.ajaxUrls.add_canto_cdn_file))
       .withQueryArguments(params)
       .get()
       .then(async (response) => {

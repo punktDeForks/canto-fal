@@ -20,36 +20,38 @@ use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\Index\FileIndexRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class CantoFileIndexRepository extends FileIndexRepository
+readonly class CantoFileIndexRepository extends FileIndexRepository
 {
+    private const TABLE = 'sys_file';
+
     protected array $fieldsWithTableNamePrefix;
 
-    public function __construct(EventDispatcherInterface $eventDispatcher)
+    public function __construct(EventDispatcherInterface $eventDispatcher, ConnectionPool $connectionPool)
     {
-        parent::__construct($eventDispatcher);
+        parent::__construct($eventDispatcher, $connectionPool);
         $this->fieldsWithTableNamePrefix = array_map(
-            function ($fieldName) {
-                return sprintf('%s.%s', $this->table, $fieldName);
+            static function ($fieldName) {
+                return sprintf('%s.%s', self::TABLE, $fieldName);
             },
-            $this->fields
+            self::FIELDS
         );
     }
 
-    public function findByFolder(Folder $folder): ?array
+    public function findByFolder(Folder $folder): array
     {
         /** @var QueryBuilder $queryBuilder */
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getQueryBuilderForTable($this->table);
+            ->getQueryBuilderForTable(self::TABLE);
 
         $result = $queryBuilder
             ->select(...$this->fieldsWithTableNamePrefix)
-            ->from($this->table)
+            ->from(self::TABLE)
             ->leftJoin(
-                $this->table,
+                self::TABLE,
                 'sys_file_canto_album',
                 'sys_file_canto_album',
                 $queryBuilder->expr()->eq(
-                    $this->table . '.uid',
+                    self::TABLE . '.uid',
                     $queryBuilder->quoteIdentifier('sys_file_canto_album.file')
                 )
             )
@@ -59,11 +61,11 @@ class CantoFileIndexRepository extends FileIndexRepository
                     $queryBuilder->createNamedParameter($folder->getIdentifier())
                 ),
                 $queryBuilder->expr()->eq(
-                    $this->table . '.storage',
+                    self::TABLE . '.storage',
                     $queryBuilder->createNamedParameter($folder->getStorage()->getUid(), ParameterType::INTEGER)
                 )
             )
-            ->groupBy($this->table . '.uid')
+            ->groupBy(self::TABLE . '.uid')
             ->executeQuery();
 
         $resultRows = [];
@@ -76,10 +78,8 @@ class CantoFileIndexRepository extends FileIndexRepository
 
     /**
      * @param Folder[] $folders
-     * @param bool $includeMissing
-     * @param string $fileName
      */
-    public function findByFolders(array $folders, $includeMissing = true, $fileName = null): array
+    public function findByFolders(array $folders, bool $includeMissing = true, ?string $fileName = null): array
     {
         $storageUids = [];
         $folderIdentifiers = [];
@@ -98,17 +98,17 @@ class CantoFileIndexRepository extends FileIndexRepository
 
         /** @var QueryBuilder $queryBuilder */
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getQueryBuilderForTable($this->table);
+            ->getQueryBuilderForTable(self::TABLE);
 
         $queryBuilder
             ->select(...$this->fieldsWithTableNamePrefix)
-            ->from($this->table)
+            ->from(self::TABLE)
             ->leftJoin(
-                $this->table,
+                self::TABLE,
                 'sys_file_canto_album',
                 'sys_file_canto_album',
                 $queryBuilder->expr()->eq(
-                    $this->table . '.uid',
+                    self::TABLE . '.uid',
                     $queryBuilder->quoteIdentifier('sys_file_canto_album.file')
                 )
             )
@@ -122,7 +122,7 @@ class CantoFileIndexRepository extends FileIndexRepository
                     $queryBuilder->createNamedParameter($storageUids, Connection::PARAM_INT_ARRAY)
                 )
             )
-            ->groupBy($this->table . '.uid');
+            ->groupBy(self::TABLE . '.uid');
 
         if (isset($fileName)) {
             $nameParts = str_getcsv($fileName, ' ', '"', '');

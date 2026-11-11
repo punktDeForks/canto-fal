@@ -20,7 +20,9 @@ use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Fluid\View\StandaloneView;
+use TYPO3\CMS\Core\View\ViewFactoryData;
+use TYPO3\CMS\Core\View\ViewFactoryInterface;
+use TYPO3\CMS\Core\View\ViewInterface;
 use TYPO3Canto\CantoApi\Endpoint\Authorization\AuthorizationFailedException;
 use TYPO3Canto\CantoApi\Http\Asset\SearchRequest;
 use TYPO3Canto\CantoFal\Domain\Model\Dto\AssetSearch;
@@ -33,12 +35,10 @@ use TYPO3Canto\CantoFal\Utility\CantoUtility;
 
 class CantoAssetBrowserController
 {
-    protected StorageRepository $storageRepository;
-
-    public function __construct(StorageRepository $storageRepository)
-    {
-        $this->storageRepository = $storageRepository;
-    }
+    public function __construct(
+        protected StorageRepository $storageRepository,
+        protected ViewFactoryInterface $viewFactory,
+    ) {}
 
     /**
      * @throws NoCantoStorageException
@@ -54,8 +54,7 @@ class CantoAssetBrowserController
         $search = $this->buildAssetSearchObject($request);
         $paginator = new SearchResultPaginator($search, $cantoRepository, $page);
 
-        $view = $this->initializeView();
-        $view->setTemplate('SearchResults');
+        $view = $this->initializeView($request);
         $view->assignMultiple([
             'results' => $paginator,
             'pagination' => new SimplePagination($paginator),
@@ -64,7 +63,7 @@ class CantoAssetBrowserController
         ]);
 
         $response = new Response();
-        $response->getBody()->write($view->render());
+        $response->getBody()->write($view->render('SearchResults'));
         return $response;
     }
 
@@ -167,18 +166,13 @@ class CantoAssetBrowserController
         return $cantoRepository;
     }
 
-    protected function initializeView(): StandaloneView
+    protected function initializeView(ServerRequestInterface $request): ViewInterface
     {
-        $view = GeneralUtility::makeInstance(StandaloneView::class);
-        $view->setLayoutRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Layouts/',
-        ]);
-        $view->setPartialRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Partials/',
-        ]);
-        $view->setTemplateRootPaths([
-            100 => 'EXT:canto_fal/Resources/Private/Templates/CantoAssetBrowser/Ajax/',
-        ]);
-        return $view;
+        return $this->viewFactory->create(new ViewFactoryData(
+            templateRootPaths: ['EXT:canto_fal/Resources/Private/Templates/CantoAssetBrowser/Ajax/'],
+            partialRootPaths: ['EXT:canto_fal/Resources/Private/Partials/'],
+            layoutRootPaths: ['EXT:canto_fal/Resources/Private/Layouts/'],
+            request: $request,
+        ));
     }
 }

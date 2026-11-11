@@ -14,7 +14,7 @@ namespace TYPO3Canto\CantoFal\Xclass;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Resource\Driver\StreamableDriverInterface;
 use TYPO3\CMS\Core\Resource\FileInterface;
-use TYPO3\CMS\Core\Resource\Folder;
+use TYPO3\CMS\Core\Resource\FolderInterface;
 use TYPO3\CMS\Core\Resource\Index\FileIndexRepository;
 use TYPO3\CMS\Core\Resource\ProcessedFile;
 use TYPO3\CMS\Core\Utility\Exception\NotImplementedMethodException;
@@ -33,7 +33,7 @@ class ResourceStorage extends \TYPO3\CMS\Core\Resource\ResourceStorage
         return parent::getFileIndexRepository();
     }
 
-    public function checkFolderActionPermission($action, ?Folder $folder = null)
+    public function checkFolderActionPermission(string $action, ?FolderInterface $folder = null): bool
     {
         if ($folder !== null && $action === 'writeFolder' && $this->getDriverType() === CantoDriver::DRIVER_NAME) {
             return CantoUtility::getSchemeFromCombinedIdentifier($folder->getIdentifier()) !== CantoUtility::SCHEME_FOLDER;

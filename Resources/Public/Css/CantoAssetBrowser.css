@@ -60,33 +60,8 @@
     padding: 15px 0;
 }
 
-.canto-input-search-query {
-    font-size: 16px;
-    padding: 5px 10px 8px;
-    width: 100%;
-}
-
 .canto-result-count {
     color: #666;
     margin-top: 10px;
     margin-bottom: 0;
-}
-
-.canto-radio-label {
-    padding-right: 10px;
-}
-
-.canto-identifier-search-container > .form-group:first-child {
-    width: 24%;
-}
-
-.canto-identifier-search-container > .form-group:last-child {
-    width: 75%;
-}
-
-.canto-input-scheme {
-    background-color: white;
-    padding: 7px 10px 10px;
-    font-size: 16px;
-    border: 1px solid #888;
 }
