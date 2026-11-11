@@ -526,17 +526,7 @@ parameters:
 			path: Classes/Resource/Metadata/Extractor.php
 
 		-
-			message: "#^Method TYPO3Canto\\\\CantoFal\\\\Resource\\\\Metadata\\\\Extractor\\:\\:extractFromMetadata\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Resource/Metadata/Extractor.php
-
-		-
 			message: "#^Method TYPO3Canto\\\\CantoFal\\\\Resource\\\\Metadata\\\\Extractor\\:\\:extractFromMetadata\\(\\) has parameter \\$fileKey with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: Classes/Resource/Metadata/Extractor.php
-
-		-
-			message: "#^Method TYPO3Canto\\\\CantoFal\\\\Resource\\\\Metadata\\\\Extractor\\:\\:extractFromMetadata\\(\\) has parameter \\$metadata with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: Classes/Resource/Metadata/Extractor.php
 

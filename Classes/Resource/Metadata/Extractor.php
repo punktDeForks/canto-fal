@@ -218,13 +218,13 @@ class Extractor implements ExtractorInterface
         return array_map(static fn($uid) => (int)$uid, $uidList);
     }
 
-    private function extractFromMetadata(array $metadata, array $fileKey)
+    private function extractFromMetadata(mixed $metadata, array $fileKey): mixed
     {
-        if (!$metadata || !$fileKey) {
+        if (!is_array($metadata) || $metadata === [] || $fileKey === []) {
             return null;
         }
         $key = array_shift($fileKey);
-        if (count($fileKey) === 0) {
+        if ($fileKey === []) {
             if ($metadata[$key] ?? null) {
                 return $metadata[$key];
             }
@@ -234,8 +234,9 @@ class Extractor implements ExtractorInterface
                     return $value;
                 }
             }
+            return null;
         }
-        return $this->extractFromMetadata($metadata[$key] ?? [], $fileKey);
+        return $this->extractFromMetadata($metadata[$key] ?? null, $fileKey);
     }
 
     /**
